@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>六合彩投注選號攪珠器</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e2d;
+            --accent: #f8b500;
+            --text: #ffffff;
+        }
+
+        body {
+            font-family: 'PingFang HK', 'Microsoft JhengHei', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            margin: 0;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            max-width: 700px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--accent);
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        /* 攪珠機顯示區 */
+        .machine-section {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .machine-ball {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 36px;
+            font-weight: bold;
+            color: #000;
+            background: #2a2a3c;
+            box-shadow: inset -4px -4px 10px rgba(0,0,0,0.5), 0 0 15px rgba(248, 181, 0, 0.2);
+            transition: transform 0.2s;
+        }
+
+        .machine-ball.rolling {
+            animation: pulse 0.15s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); }
+            100% { transform: scale(1.05); }
+        }
+
+        .status-text {
+            font-size: 15px;
+            color: #aaa;
+            min-height: 22px;
+        }
+
+        /* 控制面板 */
+        .control-panel {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            align-items: end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 14px;
+            color: #ccc;
+        }
+
+        select, input {
+            padding: 10px 12px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            background: #2a2a3c;
+            color: #fff;
+            font-size: 15px;
+        }
+
+        .btn-action {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #f8b500, #e67e22);
+            color: #000;
+            border: none;
+            padding: 14px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            box-shadow: 0 4px 12px rgba(248, 181, 0, 0.3);
+        }
+
+        .btn-action:hover:not(:disabled) { opacity: 0.95; transform: translateY(-1deg); }
+        .btn-action:disabled { background: #555; color: #888; cursor: not-allowed; box-shadow: none; }
+
+        /* 波膽樣式 */
+        .balls-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .ball {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: inset -2px -2px 5px rgba(0,0,0,0.4);
+            animation: popIn 0.3s ease forwards;
+        }
+
+        .red { background: radial-gradient(circle at 30% 30%, #ff8080, #cc0000); color: #fff; }
+        .blue { background: radial-gradient(circle at 30% 30%, #80b3ff, #0052cc); color: #fff; }
+        .green { background: radial-gradient(circle at 30% 30%, #80ffaa, #009933); color: #fff; }
+
+        .tag {
+            font-size: 13px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: #444;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .tag.banker { background: #e67e22; }
+        .tag.leg { background: #2980b9; }
+
+        /* 結果顯示卡片 */
+        .ticket-card {
+            background: #252538;
+            border-left: 4px solid var(--accent);
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .ticket-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 15px;
+            color: #aaa;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .ticket-header span:last-child {
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .section-block {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>六合彩投注選號攪珠器</h1>
+
+        <!-- 動態攪珠動畫區 -->
+        <div class="machine-section">
+            <div id="machineBall" class="machine-ball">?</div>
+            <div id="statusText" class="status-text">請設定投注模式並點擊「開始攪珠」</div>
+        </div>
+
+        <!-- 投注模式設定 -->
+        <div class="control-panel">
+            <div class="form-group">
+                <label for="modeSelect">投注模式：</label>
+                <select id="modeSelect" onchange="updateOptions()">
+                    <option value="single">單式 (6個號碼)</option>
+                    <option value="multiple">複式 (7-12個號碼)</option>
+                    <option value="banker">膽拖 (1-5個膽碼)</option>
+                </select>
+            </div>
+
+            <!-- 複式選單 -->
+            <div class="form-group" id="multipleGroup" style="display:none;">
+                <label for="multipleCount">選擇總號碼數：</label>
+                <select id="multipleCount">
+                    <option value="7">7個號碼 (7注)</option>
+                    <option value="8">8個號碼 (28注)</option>
+                    <option value="9">9個號碼 (84注)</option>
+                    <option value="10">10個號碼 (210注)</option>
+                    <option value="11">11個號碼 (462注)</option>
+                    <option value="12">12個號碼 (924注)</option>
+                </select>
+            </div>
+
+            <!-- 膽拖選單 -->
+            <div class="form-group" id="bankerGroup" style="display:none;">
+                <label for="bankerCount">膽碼數量：</label>
+                <select id="bankerCount" onchange="updateBankerLegs()">
+                    <option value="1">1個膽</option>
+                    <option value="2">2個膽</option>
+                    <option value="3">3個膽</option>
+                    <option value="4">4個膽</option>
+                    <option value="5">5個膽</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="legGroup" style="display:none;">
+                <label for="legCount">腳碼數量：</label>
+                <select id="legCount"></select>
+            </div>
+
+            <button id="drawBtn" class="btn-action" onclick="startDrawProcess()">開始攪珠抽選注項</button>
+        </div>
+
+        <!-- 最終生成的投注內容 -->
+        <div id="resultDisplay"></div>
+    </div>
+
+    <script>
+        const colorMap = {
+            red: [1, 2, 7, 8, 12, 13, 18, 19, 23, 24, 29, 30, 34, 35, 40, 45, 46],
+            blue: [3, 4, 9, 10, 14, 15, 20, 25, 26, 31, 32, 36, 37, 41, 42, 47, 48],
+            green: [5, 6, 11, 16, 17, 21, 22, 27, 28, 33, 38, 39, 43, 44, 49]
+        };
+
+        function getBallColorClass(num) {
+            if (colorMap.red.includes(num)) return 'red';
+            if (colorMap.blue.includes(num)) return 'blue';
+            if (colorMap.green.includes(num)) return 'green';
+            return '';
+        }
+
+        function combinations(n, k) {
+            if (k < 0 || k > n) return 0;
+            if (k === 0 || k === n) return 1;
+            let res = 1;
+            for (let i = 1; i <= k; i++) res = res * (n - i + 1) / i;
+            return Math.round(res);
+        }
+
+        function updateOptions() {
+            const mode = document.getElementById('modeSelect').value;
+            document.getElementById('multipleGroup').style.display = mode === 'multiple' ? 'flex' : 'none';
+            document.getElementById('bankerGroup').style.display = mode === 'banker' ? 'flex' : 'none';
+            document.getElementById('legGroup').style.display = mode === 'banker' ? 'flex' : 'none';
+            if (mode === 'banker') updateBankerLegs();
+        }
+
+        function updateBankerLegs() {
+            const bankers = parseInt(document.getElementById('bankerCount').value);
+            const legSelect = document.getElementById('legCount');
+            legSelect.innerHTML = '';
+            const minLegs = 6 - bankers;
+            for (let i = minLegs + 1; i <= 15; i++) {
+                const totalBets = combinations(i, 6 - bankers);
+                legSelect.innerHTML += `<option value="${i}">${i}個腳 (${totalBets}注)</option>`;
+            }
+        }
+
+        let isDrawing = false;
+
+        async function startDrawProcess() {
+            if (isDrawing) return;
+            isDrawing = true;
+
+            const mode = document.getElementById('modeSelect').value;
+            const drawBtn = document.getElementById('drawBtn');
+            const statusText = document.getElementById('statusText');
+            const resultDisplay = document.getElementById('resultDisplay');
+            const machineBall = document.getElementById('machineBall');
+
+            drawBtn.disabled = true;
+            resultDisplay.innerHTML = '';
+
+            let pool = Array.from({length: 49}, (_, i) => i + 1);
+            let bankers = [];
+            let legs = [];
+            let numbers = [];
+
+            // 確定抽取數量
+            if (mode === 'single') {
+                for (let i = 0; i < 6; i++) {
+                    statusText.textContent = `正在攪出第 ${i + 1} 個號碼...`;
+                    let num = await rollBall(pool);
+                    numbers.push(num);
+                }
+            } else if (mode === 'multiple') {
+                const count = parseInt(document.getElementById('multipleCount').value);
+                for (let i = 0; i < count; i++) {
+                    statusText.textContent = `正在攪出第 ${i + 1} / ${count} 個號碼...`;
+                    let num = await rollBall(pool);
+                    numbers.push(num);
+                }
+            } else if (mode === 'banker') {
+                const bankerCnt = parseInt(document.getElementById('bankerCount').value);
+                const legCnt = parseInt(document.getElementById('legCount').value);
+
+                // 攪膽碼
+                for (let i = 0; i < bankerCnt; i++) {
+                    statusText.textContent = `正在攪出第 ${i + 1} 個膽碼...`;
+                    let num = await rollBall(pool);
+                    bankers.push(num);
+                }
+
+                // 攪腳碼
+                for (let i = 0; i < legCnt; i++) {
+                    statusText.textContent = `正在攪出第 ${i + 1} / ${legCnt} 個腳碼...`;
+                    let num = await rollBall(pool);
+                    legs.push(num);
+                }
+            }
+
+            statusText.textContent = '攪珠完成！已生成您的投注注項。';
+            machineBall.textContent = '✓';
+            machineBall.className = 'machine-ball';
+
+            // 顯示最終結果
+            renderFinalTicket(mode, numbers, bankers, legs);
+
+            drawBtn.disabled = false;
+            isDrawing = false;
+        }
+
+        // 單次攪珠動畫與抽取
+        function rollBall(pool) {
+            return new Promise(resolve => {
+                const machineBall = document.getElementById('machineBall');
+                machineBall.classList.add('rolling');
+
+                const timer = setInterval(() => {
+                    let temp = pool[Math.floor(Math.random() * pool.length)];
+                    machineBall.textContent = temp < 10 ? '0' + temp : temp;
+                    machineBall.className = `machine-ball rolling ${getBallColorClass(temp)}`;
+                }, 40);
+
+                setTimeout(() => {
+                    clearInterval(timer);
+                    let idx = Math.floor(Math.random() * pool.length);
+                    let selected = pool.splice(idx, 1)[0];
+
+                    machineBall.classList.remove('rolling');
+                    machineBall.textContent = selected < 10 ? '0' + selected : selected;
+                    machineBall.className = `machine-ball ${getBallColorClass(selected)}`;
+
+                    setTimeout(() => resolve(selected), 300);
+                }, 800);
+            });
+        }
+
+        function createBallEl(num) {
+            const ball = document.createElement('div');
+            ball.className = `ball ${getBallColorClass(num)}`;
+            ball.textContent = num < 10 ? '0' + num : num;
+            return ball;
+        }
+
+        function renderFinalTicket(mode, numbers, bankers, legs) {
+            const container = document.getElementById('resultDisplay');
+            const card = document.createElement('div');
+            card.className = 'ticket-card';
+
+            let totalBets = 0;
+            let modeTitle = '';
+
+            if (mode === 'single') {
+                totalBets = 1;
+                modeTitle = '單式投注';
+                numbers.sort((a,b) => a-b);
+            } else if (mode === 'multiple') {
+                totalBets = combinations(numbers.length, 6);
+                modeTitle = `複式投注 (${numbers.length}個號碼)`;
+                numbers.sort((a,b) => a-b);
+            } else if (mode === 'banker') {
+                totalBets = combinations(legs.length, 6 - bankers.length);
+                modeTitle = `膽拖投注 (${bankers.length}膽 ${legs.length}腳)`;
+                bankers.sort((a,b) => a-b);
+                legs.sort((a,b) => a-b);
+            }
+
+            const cost = totalBets * 10;
+
+            let html = `
+                <div class="ticket-header">
+                    <span>${modeTitle}</span>
+                    <span>共 ${totalBets.toLocaleString()} 注 / $${cost.toLocaleString()}</span>
+                </div>
+            `;
+
+            card.innerHTML = html;
+
+            if (mode === 'banker') {
+                // 膽碼列
+                const bRow = document.createElement('div');
+                bRow.className = 'section-block';
+                const bTag = document.createElement('span');
+                bTag.className = 'tag banker';
+                bTag.textContent = '膽碼';
+                bRow.appendChild(bTag);
+                bankers.forEach(n => bRow.appendChild(createBallEl(n)));
+                card.appendChild(bRow);
+
+                // 腳碼列
+                const lRow = document.createElement('div');
+                lRow.className = 'section-block';
+                const lTag = document.createElement('span');
+                lTag.className = 'tag leg';
+                lTag.textContent = '腳碼';
+                lRow.appendChild(lTag);
+                legs.forEach(n => lRow.appendChild(createBallEl(n)));
+                card.appendChild(lRow);
+            } else {
+                const row = document.createElement('div');
+                row.className = 'section-block';
+                numbers.forEach(n => row.appendChild(createBallEl(n)));
+                card.appendChild(row);
+            }
+
+            container.appendChild(card);
+        }
+
+        // 初始化選單
+        updateOptions();
+    </script>
+</body>
+</html>

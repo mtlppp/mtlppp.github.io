@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>旅行貓紙 · 修正版</title>
+<title>旅行貓紙 · 多語言版</title>
 <style>
 * { box-sizing: border-box; }
 body {
@@ -31,13 +31,13 @@ h1 {
   line-height: 1.15;
   letter-spacing: -1px;
 }
-button {
+button, select {
   font: inherit;
   cursor: pointer;
   touch-action: manipulation;
   min-height: 44px;
 }
-button:focus-visible, summary:focus-visible {
+button:focus-visible, summary:focus-visible, select:focus-visible {
   outline: 3px solid #79a487;
 }
 .toggle {
@@ -72,11 +72,40 @@ button:focus-visible, summary:focus-visible {
   min-height: 36px;
 }
 .toggle .active { color: white; }
-.sub {
-  font-family: Georgia, serif;
-  font-size: 20px;
-  margin: 8px 0 4px;
+
+.lang-selector-box {
+  margin: 14px 0 6px;
 }
+.select-wrap {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  background: white;
+  border: 1px solid #c6d1c1;
+  border-radius: 12px;
+  padding: 0 14px;
+}
+.select-wrap select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: 0;
+  color: #173e33;
+  font-family: Georgia, serif;
+  font-size: 19px;
+  font-weight: 500;
+  padding-right: 22px;
+  outline: none;
+}
+.select-wrap::after {
+  content: "▾";
+  position: absolute;
+  right: 12px;
+  font-size: 14px;
+  color: #526356;
+  pointer-events: none;
+}
+
 .note {
   font-size: 13px;
   color: #6a766a;
@@ -134,7 +163,7 @@ svg {
   min-width: 0;
   flex: 1;
 }
-.jp {
+.target-text {
   font-size: 25px;
   line-height: 1.5;
   font-weight: 600;
@@ -213,7 +242,7 @@ svg {
   justify-content: center;
   text-align: center;
 }
-.detail .jp {
+.detail .target-text {
   font-size: clamp(34px, 9vw, 48px);
   font-weight: 500;
   line-height: 1.6;
@@ -302,7 +331,7 @@ svg {
   margin: 0 auto 12px;
   flex-shrink: 0;
 }
-.sheet .jp {
+.sheet .target-text {
   text-align: center;
   font-size: 26px;
   margin-top: 14px;
@@ -391,7 +420,16 @@ footer {
       <button id="en" aria-pressed="false">EN</button>
     </div>
   </header>
-  <p class="sub" id="sub"></p>
+  
+  <div class="lang-selector-box">
+    <div class="select-wrap">
+      <select id="countryLangSelect" aria-label="選擇國家與語言 / Select country and language">
+        <option value="jp">日本 · 日語 (Japan · Japanese)</option>
+        <option value="th">泰國 · 泰語 (Thailand · Thai)</option>
+      </select>
+    </div>
+  </div>
+
   <p class="note" id="intro"></p>
   <section id="groups"></section>
   <footer id="footer"></footer>
@@ -402,7 +440,7 @@ footer {
   <div class="inner">
     <div class="options" id="options"></div>
     <div class="phrase">
-      <div class="jp" lang="ja" id="djp"></div>
+      <div class="target-text" id="djp"></div>
       <div class="meaning" id="dm"></div>
       <div class="roman" id="dr"></div>
       <div class="tip" id="dt"></div>
@@ -418,7 +456,7 @@ footer {
     <div class="sheet-scroll" id="sheetScroll">
       <div class="sheet-inner">
         <strong id="padtitle" style="display:block; text-align:center; font-size:15px; color:#637369; margin-bottom:4px;">價錢輸入</strong>
-        <div class="jp" lang="ja" id="pjp"></div>
+        <div class="target-text" id="pjp"></div>
         <div class="meaning" id="pm"></div>
         <output class="number" id="number" aria-live="polite">0</output>
         <div class="keys" id="keys"></div>
@@ -430,21 +468,48 @@ footer {
 </section>
 
 <script>
-const rows = [
-  ['これはありますか？', '你們有這個嗎？', 'Do you have this?', 'Kore wa arimasu ka?'],
-  ['これをください。', '請給我這個。', 'This one, please.', 'Kore o kudasai'],
-  ['いくらですか？', '多少錢？', 'How much is it?', 'Ikura desu ka?'],
-  ['お会計お願いします。', '請結帳。', 'The bill, please.', 'Okaikei onegaishimasu'],
-  ['カードは使えますか？', '可以用卡付款嗎？', 'Can I pay by card?', 'Kādo wa tsukaemasu ka?'],
-  ['トイレはどこですか？', '洗手間在哪裏？', 'Where is the toilet?', 'Toire wa doko desu ka?'],
-  ['ここに行きたいです。', '我想去這裏。', 'I want to go here.', 'Koko ni ikitai desu'],
-  ['予約しています。', '我有預約。', 'I have a reservation.', 'Yoyaku shite imasu'],
-  ['手伝ってください。', '請幫我一下。', 'Please help me.', 'Tetsudatte kudasai'],
-  ['すみません。', '不好意思。', 'Excuse me.', 'Sumimasen'],
-  ['日本語がわかりません。', '我不懂日語。', "I don’t understand Japanese.", 'Nihongo ga wakarimasen'],
-  ['いりません。', '不用了。', 'No, thank you.', 'Irimasen'],
-  ['ありがとう。', '謝謝。', 'Thank you.', 'Arigatō']
-];
+const DB = {
+  jp: {
+    langCode: 'ja',
+    labelZh: '日本 · 日語',
+    labelEn: 'Japan · Japanese',
+    rows: [
+      ['これはありますか？', '你們有這個嗎？', 'Do you have this?', 'Kore wa arimasu ka?'],
+      ['これをください。', '請給我這個。', 'This one, please.', 'Kore o kudasai'],
+      ['いくらですか？', '多少錢？', 'How much is it?', 'Ikura desu ka?'],
+      ['お会計お願いします。', '請結帳。', 'The bill, please.', 'Okaikei onegaishimasu'],
+      ['カードは使えますか？', '可以用卡付款嗎？', 'Can I pay by card?', 'Kādo wa tsukaemasu ka?'],
+      ['トイレはどこですか？', '洗手間在哪裏？', 'Where is the toilet?', 'Toire wa doko desu ka?'],
+      ['ここに行きたいです。', '我想去這裏。', 'I want to go here.', 'Koko ni ikitai desu'],
+      ['予約しています。', '我有預約。', 'I have a reservation.', 'Yoyaku shite imasu'],
+      ['手伝ってください。', '請幫我一下。', 'Please help me.', 'Tetsudatte kudasai'],
+      ['すみません。', '不好意思。', 'Excuse me.', 'Sumimasen'],
+      ['日本語がわかりません。', '我不懂日語。', "I don’t understand Japanese.", 'Nihongo ga wakarimasen'],
+      ['いりません。', '不用了。', 'No, thank you.', 'Irimasen'],
+      ['ありがとう。', '謝謝。', 'Thank you.', 'Arigatō']
+    ]
+  },
+  th: {
+    langCode: 'th',
+    labelZh: '泰國 · 泰語',
+    labelEn: 'Thailand · Thai',
+    rows: [
+      ['มีอันนี้ไหมครับ/ค่ะ?', '你們有這個嗎？', 'Do you have this?', 'Mii an nii mai khrap/kha?'],
+      ['เอาอันนี้ครับ/ค่ะ', '請給我這個。', 'This one, please.', 'Ao an nii khrap/kha'],
+      ['เท่าไหร่ครับ/ค่ะ?', '多少錢？', 'How much is it?', 'Thao rai khrap/kha?'],
+      ['เช็คบิลด้วยครับ/ค่ะ', '請結帳。', 'The bill, please.', 'Chek bin duai khrap/kha'],
+      ['จ่ายบัตรได้ไหมครับ/ค่ะ?', '可以用卡付款嗎？', 'Can I pay by card?', 'Jai bat dai mai khrap/kha?'],
+      ['ห้องน้ำอยู่ที่ไหนครับ/ค่ะ?', '洗手間在哪裏？', 'Where is the toilet?', 'Hong nam yuu thii nai khrap/kha?'],
+      ['อยากไปที่นี่ครับ/ค่ะ', '我想去這裏。', 'I want to go here.', 'Yaak pai thii nii khrap/kha'],
+      ['จองไว้แล้วครับ/ค่ะ', '我有預約。', 'I have a reservation.', 'Jong wai laeo khrap/kha'],
+      ['ช่วยหน่อยได้ไหมครับ/ค่ะ?', '請幫我一下。', 'Please help me.', 'Chuai noi dai mai khrap/kha?'],
+      ['ขอโทษครับ/ค่ะ', '不好意思。', 'Excuse me.', 'Kho thot khrap/kha'],
+      ['พูดภาษาไทยไม่ได้ครับ/ค่ะ', '我不懂泰語。', "I don’t speak Thai.", 'Phuut phaa-saa thai mai dai khrap/kha'],
+      ['ไม่เอาครับ/ค่ะ', '不用了。', 'No, thank you.', 'Mai ao khrap/kha'],
+      ['ขอบคุณครับ/ค่ะ', '謝謝。', 'Thank you.', 'Khop khun khrap/kha']
+    ]
+  }
+};
 
 const gs = [
   ['買東西／點餐', 'Shopping / Ordering', '找商品、選東西', 'Find and choose items', 0, 2, 'bag'],
@@ -461,9 +526,14 @@ const paths = {
 };
 
 const $ = id => document.getElementById(id);
+let currentLang = 'jp';
 let en = false, first = true, current = 0, variant = 0, cash = false, digits = '', state = 'closed', savedScroll = 0, trigger = null, priceTrigger = null, timer;
 
-try { en = localStorage.getItem('cheat-ui') === 'en'; } catch(e) {}
+try {
+  en = localStorage.getItem('cheat-ui') === 'en';
+  const savedL = localStorage.getItem('cheat-target-lang');
+  if (savedL && DB[savedL]) currentLang = savedL;
+} catch(e) {}
 
 const icon = n => '<svg viewBox="0 0 24 24" aria-hidden="true">' + paths[n] + '</svg>';
 const tips = [
@@ -488,8 +558,14 @@ function focusNoScroll(el) {
 }
 
 function hint(r) {
-  return r[0].includes('は') ? (en ? 'Pronunciation: は sounds like wa.' : '讀法：は 讀 wa。') :
-         r[0].includes('を') ? (en ? 'Pronunciation: を sounds like o.' : '讀法：を 讀 o。') : '';
+  if (currentLang === 'jp') {
+    return r[0].includes('は') ? (en ? 'Pronunciation: は sounds like wa.' : '讀法：は 讀 wa。') :
+           r[0].includes('を') ? (en ? 'Pronunciation: を sounds like o.' : '讀法：を 讀 o。') : '';
+  }
+  if (currentLang === 'th') {
+    return en ? 'Polite ending: 男士說 khrap (ครับ) / 女士說 kha (ค่ะ/คะ)' : '禮貌尾音：男士說 khrap (ครับ) / 女士說 kha (ค่ะ/คะ)';
+  }
+  return '';
 }
 
 function render(anim = false) {
@@ -501,10 +577,17 @@ function render(anim = false) {
     $(id).className = (i === 1) === en ? 'active' : '';
     $(id).setAttribute('aria-pressed', (i === 1) === en);
   });
-  $('sub').textContent = en ? 'Japanese · Japan' : '日語 · 日本';
+  
+  $('countryLangSelect').value = currentLang;
+  $('countryLangSelect').options[0].textContent = en ? 'Japan · Japanese' : '日本 · 日語';
+  $('countryLangSelect').options[1].textContent = en ? 'Thailand · Thai' : '泰國 · 泰語';
+  
   $('intro').textContent = en ? 'Read it aloud, or tap for details.' : '照着讀，或點一下使用詳細功能。';
-  $('footer').textContent = en ? 'Mobile compatibility demo · No ads' : '手機相容性修正版 Demo · 無廣告';
+  $('footer').textContent = en ? 'Travel Phrase Sheet · No ads' : '旅行語句貓紙 · 無廣告';
   $('groups').replaceChildren();
+
+  const rows = DB[currentLang].rows;
+  const langCode = DB[currentLang].langCode;
 
   gs.forEach((g, gi) => {
     const d = document.createElement('details');
@@ -526,7 +609,7 @@ function render(anim = false) {
       const c = document.createElement('div');
       c.className = 'content';
       [
-        ['jp', r[0]],
+        ['target-text', r[0]],
         ['meaning', r[en ? 2 : 1]],
         ['roman', r[3]],
         ['tip', hint(r)],
@@ -535,9 +618,9 @@ function render(anim = false) {
       ].forEach(([cls, txt]) => {
         if (!txt) return;
         const x = document.createElement('div');
-        x.className = cls + (anim && cls !== 'jp' && cls !== 'roman' ? ' fade' : '');
+        x.className = cls + (anim && cls !== 'target-text' && cls !== 'roman' ? ' fade' : '');
         x.textContent = txt;
-        if (cls === 'jp') x.lang = 'ja';
+        if (cls === 'target-text') x.lang = langCode;
         c.append(x);
       });
       b.append(c);
@@ -551,17 +634,33 @@ function render(anim = false) {
 }
 
 function activeRow() {
+  const rows = DB[currentLang].rows;
   let r = [...rows[current]];
-  if (current === 4 && cash) return ['現金で払えますか？', '可以用現金付款嗎？', 'Can I pay in cash?', 'Genkin de haraemasu ka?'];
-  if ([0, 1, 2].includes(current) && variant > 0) {
-    const v = variant - 1,
-          k = ['これ', 'それ', 'あれ'][v],
-          ko = ['Kore', 'Sore', 'Are'][v],
-          z = ['這個', '對方那個', '遠處那個'][v],
-          e = ['this', 'that', 'that over there'][v];
-    if (current === 0) r = [k + 'はありますか？', '你們有' + z + '嗎？', 'Do you have ' + e + '?', ko + ' wa arimasu ka?'];
-    if (current === 1) r = [k + 'をください。', '請給我' + z + '。', e[0].toUpperCase() + e.slice(1) + ', please.', ko + ' o kudasai'];
-    if (current === 2) r = [k + 'はいくらですか？', z + '多少錢？', 'How much is ' + e + '?', ko + ' wa ikura desu ka?'];
+
+  if (currentLang === 'jp') {
+    if (current === 4 && cash) return ['現金で払えますか？', '可以用現金付款嗎？', 'Can I pay in cash?', 'Genkin de haraemasu ka?'];
+    if ([0, 1, 2].includes(current) && variant > 0) {
+      const v = variant - 1,
+            k = ['これ', 'それ', 'あれ'][v],
+            ko = ['Kore', 'Sore', 'Are'][v],
+            z = ['這個', '對方那個', '遠處那個'][v],
+            e = ['this', 'that', 'that over there'][v];
+      if (current === 0) r = [k + 'はありますか？', '你們有' + z + '嗎？', 'Do you have ' + e + '?', ko + ' wa arimasu ka?'];
+      if (current === 1) r = [k + 'をください。', '請給我' + z + '。', e[0].toUpperCase() + e.slice(1) + ', please.', ko + ' o kudasai'];
+      if (current === 2) r = [k + 'はいくらですか？', z + '多少錢？', 'How much is ' + e + '?', ko + ' wa ikura desu ka?'];
+    }
+  } else if (currentLang === 'th') {
+    if (current === 4 && cash) return ['จ่ายเงินสดได้ไหมครับ/ค่ะ?', '可以用現金付款嗎？', 'Can I pay in cash?', 'Jai ngoen sot dai mai khrap/kha?'];
+    if ([0, 1, 2].includes(current) && variant > 0) {
+      const v = variant - 1,
+            k = ['อันนี้', 'อันนั้น', 'อันโน้น'][v],
+            ko = ['An nii', 'An nan', 'An noon'][v],
+            z = ['這個', '那個', '遠處那個'][v],
+            e = ['this', 'that', 'that over there'][v];
+      if (current === 0) r = ['มี' + k + 'ไหมครับ/ค่ะ?', '你們有' + z + '嗎？', 'Do you have ' + e + '?', 'Mii ' + ko.toLowerCase() + ' mai khrap/kha?'];
+      if (current === 1) r = ['เอา' + k + 'ครับ/ค่ะ', '請給我' + z + '。', e[0].toUpperCase() + e.slice(1) + ', please.', 'Ao ' + ko.toLowerCase() + ' khrap/kha'];
+      if (current === 2) r = [k + 'เท่าไหร่ครับ/ค่ะ?', z + '多少錢？', 'How much is ' + e + '?', ko + ' thao rai khrap/kha?'];
+    }
   }
   return r;
 }
@@ -583,8 +682,10 @@ function openDetail(i, b) {
 
 function detailRender() {
   const r = activeRow();
+  const langCode = DB[currentLang].langCode;
   $('back').textContent = en ? '‹ Back' : '‹ 返回';
   $('djp').textContent = r[0];
+  $('djp').lang = langCode;
   $('dm').textContent = r[en ? 2 : 1];
   $('dr').textContent = r[3];
   $('dt').textContent = hint(r);
@@ -645,7 +746,9 @@ function openPad() {
   state = 'opening';
   digits = '';
   const r = activeRow();
+  const langCode = DB[currentLang].langCode;
   $('pjp').textContent = r[0];
+  $('pjp').lang = langCode;
   $('pm').textContent = r[en ? 2 : 1];
   $('number').textContent = '0';
   $('padtitle').textContent = en ? 'Enter price' : '價錢輸入';
@@ -746,6 +849,12 @@ function change(v) {
 }
 $('zh').onclick = () => change(false);
 $('en').onclick = () => change(true);
+
+$('countryLangSelect').onchange = (e) => {
+  currentLang = e.target.value;
+  try { localStorage.setItem('cheat-target-lang', currentLang); } catch(err) {}
+  render(true);
+};
 
 render();
 </script>

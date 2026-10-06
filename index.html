@@ -1,6 +1,3 @@
-以下為修正後的完整單一 HTML 檔案程式碼，已移除原生 `<dialog>` 的置中與焦點干擾，改用穩定貼底的抽屜圖層並保留所有動效與功能：
-
-```html
 <!doctype html>
 <html lang="zh-Hant">
 <head>
@@ -513,25 +510,25 @@ function render(anim = false) {
     const d = document.createElement('details');
     d.open = first ? gi === 0 : !!open[gi];
     const s = document.createElement('summary');
-    s.innerHTML = icon(g [play.google](https://play.google.com/store/apps/details?id=com.jide.tourist_companion_playstore2&hl=zh_HK));
+    s.innerHTML = icon(g[6]);
     const t = document.createElement('div');
     t.innerHTML = '<strong></strong><small></small>';
     t.children[0].textContent = g[en ? 1 : 0];
-    t.children [github](https://github.com/real).textContent = g[en ? 3 : 2];
+    t.children[1].textContent = g[en ? 3 : 2];
     if (anim) t.className = 'fade';
     s.append(t);
     d.append(s);
 
-    for (let i = g [web](https://web.dev/articles/offline-cookbook?hl=zh-tw); i < g [github](https://github.com/45568687); i++) {
+    for (let i = g[4]; i < g[5]; i++) {
       const r = rows[i], b = document.createElement('button');
       b.className = 'card';
-      b.innerHTML = icon(g [play.google](https://play.google.com/store/apps/details?id=com.jide.tourist_companion_playstore2&hl=zh_HK));
+      b.innerHTML = icon(g[6]);
       const c = document.createElement('div');
       c.className = 'content';
       [
         ['jp', r[0]],
         ['meaning', r[en ? 2 : 1]],
-        ['roman', r [github](https://github.com/morhipocom)],
+        ['roman', r[3]],
         ['tip', hint(r)],
         ['tip', tips[i][en ? 1 : 0]],
         ['label', en ? 'Details ›' : '詳細 ›']
@@ -589,7 +586,7 @@ function detailRender() {
   $('back').textContent = en ? '‹ Back' : '‹ 返回';
   $('djp').textContent = r[0];
   $('dm').textContent = r[en ? 2 : 1];
-  $('dr').textContent = r [github](https://github.com/morhipocom);
+  $('dr').textContent = r[3];
   $('dt').textContent = hint(r);
   $('options').replaceChildren();
   $('actions').replaceChildren();
@@ -754,4 +751,3 @@ render();
 </script>
 </body>
 </html>
-```
